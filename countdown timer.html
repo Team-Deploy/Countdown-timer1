@@ -1,0 +1,185 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timer</title>
+
+  <style>
+    p {
+      /* position: absolute; */
+      text-align: center;
+      font-size: 60px;
+      margin-top: 500px;
+      background-color: #434343;
+      color: white;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 50px;
+      color: #333;
+      background-color: #73c8a9;
+      margin: 20px;
+      padding: 20px;
+    }
+
+    button {
+      background-color: #e6dada;
+      border-radius: 12px;
+      font-weight: bold;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    }
+
+    div {
+      position: absolute;
+      margin-left: 36%;
+      font-size: 25px;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      /*border: 10px solid;*/
+      padding: 50px;
+      border-radius: 12px;
+      background: linear-gradient(to right, #ba5370, #f4e2d8);;
+    }
+
+    input {
+      border-radius: 5px;
+      background-color: rgb(242, 239, 235);
+    }
+
+    body {
+      background: linear-gradient(to right,#e6dada,#274046);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Countdown Timer</h1>
+  <div>
+    <label>Select Timer Type:</label><br><br>
+    <input type="radio" id="countdownRadio" name="timerType" checked onclick="toggleTimerType()">
+    <label for="countdownRadio">Countdown Timer</label><br><br>
+
+    <input type="radio" id="stopwatchRadio" name="timerType" onclick="toggleTimerType()">
+    <label for="stopwatchRadio">Stopwatch Timer</label><br><br>
+
+    <label>Select Date and Time:</label>
+    <input type="datetime-local" id="datetime" disabled><br><br>
+    <label>Select Minutes:</label>
+    <input type="number" id="minutes" min="1" value="0" disabled><br><br>
+    <label>Select Seconds:</label>
+    <input type="number" id="seconds" min="0" value="0" disabled><br><br>
+    <button onclick="startTimer()">Start Timer</button>
+    <button onclick="pauseResumeTimer()">Pause/Resume Timer</button>
+    <button onclick="stopTimer()">Stop Timer</button>
+
+  </div><br>
+  <p id="demo"></p>
+  <audio id="alarm" src="myalarm.mp3" autoplay></audio>
+  <script>
+    var timerInterval;
+    var startTime;
+    var elapsedTimerDuration = 0; // Initialize elapsedTimerDuration
+
+    var paused = false;
+    var pauseTime;
+
+    function startTimer() {
+      // Clear existing timer if any
+      clearInterval(timerInterval);
+
+      var selectedDateTime;
+      var timerDuration;
+
+      if (document.getElementById("countdownRadio").checked) {
+        // Countdown Timer
+        selectedDateTime = document.getElementById("datetime").value;
+        timerDuration = new Date(selectedDateTime).getTime() - new Date().getTime();
+      } else {
+        // Stopwatch Timer
+        var minutes = parseInt(document.getElementById("minutes").value) || 0;
+        var seconds = parseInt(document.getElementById("seconds").value) || 0;
+        timerDuration = (minutes * 60 + seconds) * 1000;
+      }
+
+      startTime = new Date().getTime(); // Reset startTime
+      elapsedTimerDuration = 0; // Reset elapsedTimerDuration
+
+      // Update the timer every 1 second
+      timerInterval = setInterval(function () {
+        if (!paused) {
+          // Calculate the elapsed time
+          elapsedTimerDuration = new Date().getTime() - startTime;
+
+          // Calculate the remaining time
+          var remainingTime = timerDuration - elapsedTimerDuration;
+
+          // Time calculations for days, hours, minutes, and seconds
+          var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+          var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+          var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+          // Output the result in an element with id="demo"
+          document.getElementById("demo").innerHTML = days + "d " + hours + "h " +
+            minutes + "m " + seconds + "s ";
+
+          // If the timer is over, clear the interval and display "EXPIRED"
+          if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById("alarm").play();
+            document.getElementById("demo").innerHTML = "EXPIRED";
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseResumeTimer() {
+      if (paused) {
+        // Resume Timer
+        paused = false;
+        startTime = new Date().getTime() - pauseTime;
+        startTimer();
+      } else {
+        // Pause Timer
+        paused = true;
+        clearInterval(timerInterval);
+        pauseTime = elapsedTimerDuration;
+      }
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+
+      // Display the total elapsed time
+      var elapsedDays = Math.floor(elapsedTimerDuration / (1000 * 60 * 60 * 24));
+      var elapsedHours = Math.floor((elapsedTimerDuration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      var elapsedMinutes = Math.floor((elapsedTimerDuration % (1000 * 60 * 60)) / (1000 * 60));
+      var elapsedSeconds = Math.floor((elapsedTimerDuration % (1000 * 60)) / 1000);
+
+      document.getElementById("demo").innerHTML = "Elapsed Time: " +
+        elapsedDays + "d " + elapsedHours + "h " +
+        elapsedMinutes + "m " + elapsedSeconds + "s";
+    }
+
+    // Function to toggle between Countdown and Stopwatch modes
+    function toggleTimerType() {
+      var datetimeInput = document.getElementById("datetime");
+      var minutesInput = document.getElementById("minutes");
+      var secondsInput = document.getElementById("seconds");
+
+      if (document.getElementById("countdownRadio").checked) {
+        datetimeInput.disabled = false;
+        minutesInput.disabled = true;
+        secondsInput.disabled = true;
+      } else {
+        datetimeInput.disabled = true;
+        minutesInput.disabled = false;
+        secondsInput.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+
+</html>
